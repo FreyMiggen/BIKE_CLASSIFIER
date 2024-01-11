@@ -57,7 +57,7 @@ class ImagenetDataset(torch.utils.data.Dataset):
         # Define a transformation function for image: Resize the shorter image
         # edge then take a center crop (optional) and normalize.
         _transforms = [
-            transforms.Resize(256),
+            transforms.Resize(image_size),
             transforms.CenterCrop(image_size),
             transforms.ToTensor(),
              transforms.Normalize(
