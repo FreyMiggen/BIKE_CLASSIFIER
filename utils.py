@@ -53,7 +53,6 @@ class ImagenetDataset(torch.utils.data.Dataset):
             instances.append(temp)
             
         self.instances=instances
-        self.dataset_dir = dataset_dir
 
         # Define a transformation function for image: Resize the shorter image
         # edge then take a center crop (optional) and normalize.
@@ -64,6 +63,9 @@ class ImagenetDataset(torch.utils.data.Dataset):
              transforms.Normalize(
                mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
             ),
+            transforms.RandomRotation((0.1,0.5)),
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.RandomVerticalFlip(p=0.5)
         ]
       
         self.image_transform = transforms.Compose(_transforms)
@@ -74,10 +76,7 @@ class ImagenetDataset(torch.utils.data.Dataset):
         # PIL image and dictionary of annotations.
         instance=self.instances[index]
         image_path, label=instance['name'],instance['label']
-
-        image_path = os.path.join(self.dataset_dir, image_path)
         image = Image.open(image_path).convert("RGB")
-
         # Transform input image to CHW tensor.
         image = self.image_transform(image)
 
