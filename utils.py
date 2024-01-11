@@ -149,7 +149,7 @@ def accuracy(pred,target,sigmoid=False):
         pred=F.sigmoid(pred)
     pred[pred>0.5]=1.
     pred[pred<=0.5]=0.
-    acc=(pred==target).nonzero()
+    acc=(pred==target).to(torch.float32)
     return torch.mean(acc)
 
 def test(img_path):
