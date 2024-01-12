@@ -1,9 +1,5 @@
 
-import json
 import os
-import shutil
-import time
-
 import matplotlib.pyplot as plt
 import torch
 import torchvision 
@@ -63,7 +59,7 @@ class ImagenetDataset(torch.utils.data.Dataset):
              transforms.Normalize(
                mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
             ),
-            transforms.RandomRotation((0.1,0.5)),
+            transforms.RandomRotation((0.1,0.2)),
             transforms.RandomHorizontalFlip(p=0.5),
             transforms.RandomVerticalFlip(p=0.5)
         ]
