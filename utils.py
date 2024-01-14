@@ -22,6 +22,7 @@ class ImagenetDataset(torch.utils.data.Dataset):
         motor_fol:str,
         cycle_fol:str,
         image_size: int = 224,
+        repeat: int =5
     ):
         """
         Args:
@@ -37,8 +38,8 @@ class ImagenetDataset(torch.utils.data.Dataset):
         motor_dir=os.path.join(dataset_dir,motor_fol)
         bicycle_dir=os.path.join(dataset_dir,cycle_fol)
         
-        motor=[os.path.join(motor_dir,file) for file in os.listdir(motor_dir)]
-        bicycle=[os.path.join(bicycle_dir,file) for file in os.listdir(bicycle_dir)]
+        motor=[os.path.join(motor_dir,file) for file in os.listdir(motor_dir)]*repeat
+        bicycle=[os.path.join(bicycle_dir,file) for file in os.listdir(bicycle_dir)]*repeat
         instances=list()
         for i in range(len(motor)):
             temp={'name':motor[i],'label':1}
@@ -59,12 +60,18 @@ class ImagenetDataset(torch.utils.data.Dataset):
              transforms.Normalize(
                mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
             ),
-            transforms.RandomRotation((0.1,0.2)),
+        ]
+
+        optional_trans=[
+            transforms.ColorJitter(brightness=(0.1,0.5),saturation=(0.1,0.5),hue=(0.1,0.5)),
+            transforms.RandomGrayscale(p=0.1),
+            transforms.RandomRotation((0.1,0.5),expand=False),
+            transforms.RandomPerspective(),
             transforms.RandomHorizontalFlip(p=0.5),
             transforms.RandomVerticalFlip(p=0.5)
         ]
-      
         self.image_transform = transforms.Compose(_transforms)
+        self.optional_trans=transforms.RandomApply(optional_trans)
     def __len__(self):
             return len(self.instances)
 
@@ -76,7 +83,7 @@ class ImagenetDataset(torch.utils.data.Dataset):
         # Transform input image to CHW tensor.
         image = self.image_transform(image)
 
-        
+        image=self.optional_trans(image)
         # Return image path because it is needed for evaluation.
         return image_path, image, label
     
@@ -148,14 +155,15 @@ def accuracy(pred,target,sigmoid=False):
     acc=(pred==target).to(torch.float32)
     return torch.mean(acc)
 
-def test(img_path):
+def test(img_path,model):
+    model.eval()
     img=Image.open(img_path).convert('RGB')
     plt.imshow(img)
     img=torchvision.transforms.functional.pil_to_tensor(img).to(torch.float32)/255.0
     img=torchvision.transforms.functional.resize(img,(224,224))
     img=torchvision.transforms.functional.normalize(img,mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     img=torch.unsqueeze(img,dim=0)
-    pred=model(img.to(DEVICE))
+    pred=model(img.to(DEVICE)).to(detach)
     if pred<0.5:
         print('BICYCLE')
     else:
